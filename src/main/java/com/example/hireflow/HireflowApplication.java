@@ -9,5 +9,4 @@ public class HireflowApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(HireflowApplication.class, args);
 	}
-
 }
