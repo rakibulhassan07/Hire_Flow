@@ -3,11 +3,15 @@ package com.example.hireflow.controller;
 import com.example.hireflow.dto.user.UserCreateRequest;
 import com.example.hireflow.dto.user.UserResponse;
 import com.example.hireflow.dto.user.UserUpdateRequest;
+import com.example.hireflow.entity.User;
+import com.example.hireflow.mapper.UserMapper;
+import com.example.hireflow.security.CustomUserDetails;
 import com.example.hireflow.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,9 +22,10 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
+    private final UserMapper userMapper;
 
     @PostMapping
-    public ResponseEntity<UserResponse> createUser(@Valid @RequestBody UserCreateRequest request){
+    public ResponseEntity<UserResponse> createUser(@Valid @RequestBody UserCreateRequest request) {
 
         UserResponse response = userService.createUser(request);
 
@@ -39,7 +44,8 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<UserResponse> updateUser(@PathVariable Long id, @Valid @RequestBody UserUpdateRequest request) {
+    public ResponseEntity<UserResponse> updateUser(@PathVariable Long id,
+            @Valid @RequestBody UserUpdateRequest request) {
 
         return ResponseEntity.ok(userService.updateUser(id, request));
     }
@@ -50,5 +56,17 @@ public class UserController {
         userService.deleteUser(id);
 
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserResponse> getCurrentUser(
+            Authentication authentication) {
+
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+
+        User user = userDetails.getUser();
+
+        return ResponseEntity.ok(
+                userMapper.toResponse(user));
     }
 }

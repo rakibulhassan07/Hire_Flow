@@ -5,10 +5,13 @@ import com.example.hireflow.dto.user.UserResponse;
 import com.example.hireflow.dto.user.UserUpdateRequest;
 import com.example.hireflow.entity.User;
 import com.example.hireflow.entity.type.AccountStatus;
+import com.example.hireflow.exception.DuplicateResourceException;
+import com.example.hireflow.exception.ResourceNotFoundException;
 import com.example.hireflow.mapper.UserMapper;
 import com.example.hireflow.repository.UserRepository;
 import com.example.hireflow.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,16 +24,18 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public UserResponse createUser(UserCreateRequest request) {
 
         if (userRepository.existsByEmail(request.email())) {
-            throw new RuntimeException("User already exists with email: " + request.email());
+            throw new DuplicateResourceException("User already exists with email: " + request.email());
         }
 
         User user = userMapper.toEntity(request);
 
+        user.setPassword(passwordEncoder.encode(request.password()));
         user.setAccountStatus(AccountStatus.ACTIVE);
         user.setEmailVerified(false);
 
@@ -45,7 +50,7 @@ public class UserServiceImpl implements UserService {
 
         User user = userRepository.findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException("User not found with id: " + id)
+                        new ResourceNotFoundException("User not found with id: " + id)
                 );
 
         return userMapper.toResponse(user);
@@ -65,7 +70,7 @@ public class UserServiceImpl implements UserService {
     public UserResponse updateUser(Long id, UserUpdateRequest request) {
 
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
 
         userMapper.updateEntity(user, request);
 
@@ -78,7 +83,7 @@ public class UserServiceImpl implements UserService {
     public void deleteUser(Long id) {
 
         if (!userRepository.existsById(id)) {
-            throw new RuntimeException("User not found with id: " + id);
+            throw new ResourceNotFoundException("User not found with id: " + id);
         }
 
         userRepository.deleteById(id);
