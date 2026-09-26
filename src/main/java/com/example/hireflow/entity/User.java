@@ -6,6 +6,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(
@@ -71,4 +73,10 @@ public class User {
 
         updatedAt = LocalDateTime.now();
     }
+    @OneToMany(
+            mappedBy = "user",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private Set<UserAuthAccount> authAccounts = new HashSet<>();
 }
